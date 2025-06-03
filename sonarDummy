@@ -1,0 +1,33 @@
+# Dummy Python script for SonarQube scan
+
+# Unused import (code smell)
+import math
+
+# Function with no docstring (code smell)
+def add_numbers(a, b):
+    return a + b
+
+# Function with a hardcoded value (code smell)
+def calculate_area(radius):
+    pi = 3.14  # Hardcoded value instead of using math.pi
+    return pi * radius * radius
+
+# Function with a potential bug (division by zero)
+def divide_numbers(a, b):
+    return a / b  # No check for division by zero
+
+# Function with inconsistent naming convention
+def PrintMessage(message):
+    print(message)
+
+# Dead code (unused function)
+def unused_function():
+    print("This function is never called.")
+
+# Main function
+if __name__ == "__main__":
+    print("Addition:", add_numbers(5, 10))
+    print("Area:", calculate_area(7))
+    print("Division:", divide_numbers(10, 2))
+    PrintMessage("Hello, SonarQube!")
+
