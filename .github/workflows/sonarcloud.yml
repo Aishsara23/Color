@@ -31,8 +31,4 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=aishsara23_sonar-python-demo
-            -Dsonar.organization=aishsara23
-            -Dsonar.python.coverage.reportPaths=coverage.xml
+  
