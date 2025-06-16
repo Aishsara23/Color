@@ -1,16 +1,16 @@
-name: CI/CD Pipeline with SonarCloud
+name: CI/CD with SonarCloud
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  build:
-    runs-on: windows-latest
+  build-and-analyze:
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -19,9 +19,9 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Install dependencies and run tests
+      - name: Install dependencies & run tests with coverage
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install coverage
           coverage run -m unittest discover
           coverage xml
@@ -32,14 +32,41 @@ jobs:
           projectBaseDir: .
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: aishsara23_sonar-python-demo
+          SONAR_ORGANIZATION: aishsara23
 
-      - name: Wait for SonarCloud Quality Gate
-        uses: SonarSource/sonarcloud-quality-gate-action@master
-        with:
-          timeout: '300' # Waits up to 5 minutes
+      - name: Wait and check SonarCloud Quality Gate status
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          echo "Waiting for Quality Gate result from SonarCloud..."
+          sleep 10
+          for i in {1..10}; do
+            STATUS=$(curl -s -u "${SONAR_TOKEN}:" \
+              "https://sonarcloud.io/api/qualitygates/project_status?projectKey=aishsara23_sonar-python-demo" \
+              | jq -r '.projectStatus.status')
 
-      - name: Deploy only if Quality Gate passed
-        if: success()  # This will run only if all above steps succeeded
-        run: echo "🚀 Deployed successfully because tests and analysis passed!"
+            echo "Current Quality Gate Status: $STATUS"
+
+            if [ "$STATUS" == "OK" ]; then
+              echo "✅ Quality Gate passed."
+              exit 0
+            elif [ "$STATUS" == "ERROR" ]; then
+              echo "❌ Quality Gate failed. Stopping pipeline."
+              exit 1
+            else
+              echo "⌛ Still waiting... trying again in 5s"
+              sleep 5
+            fi
+          done
+
+          echo "⚠️ Timed out waiting for Quality Gate status."
+          exit 1
+
+  deploy:
+    needs: build-and-analyze
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Mock Deploy
+        run: echo "🚀 Deployed because tests and SonarCloud passed!"
